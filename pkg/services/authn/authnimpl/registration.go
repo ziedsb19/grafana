@@ -41,7 +41,7 @@ func ProvideRegistration(
 	features featuremgmt.FeatureToggles, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
-	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service, teamService team.Service,
+	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service, teamService team.Service, teamPermissionsService accesscontrol.TeamPermissionsService,
 ) Registration {
 	logger := log.New("authn.registration")
 
@@ -111,7 +111,7 @@ func ProvideRegistration(
 	// FIXME (jguer): move to User package
 	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features)
 	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
-	teamSync := sync.ProvideTeamSync(userService, teamService, accessControlService, cfg, tracer)
+	teamSync := sync.ProvideTeamSync(userService, teamService, accessControlService, cfg, tracer, teamPermissionsService)
 	authnSvc.RegisterPostAuthHook(userSync.SyncUserHook, 10)
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)
 	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 30)

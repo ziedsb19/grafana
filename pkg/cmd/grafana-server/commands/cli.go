@@ -67,7 +67,7 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
 		}
 	}()
-
+	logger.Info("Mohamed Zied Sbabti, Custom Grfana Build")
 	if err := setupProfiling(Profile, ProfileAddr, ProfilePort, ProfileBlockRate, ProfileMutexFraction); err != nil {
 		return err
 	}
