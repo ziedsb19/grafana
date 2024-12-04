@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/team"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,7 +41,7 @@ func ProvideRegistration(
 	features featuremgmt.FeatureToggles, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
-	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
+	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service, teamService team.Service,
 ) Registration {
 	logger := log.New("authn.registration")
 
@@ -110,11 +111,13 @@ func ProvideRegistration(
 	// FIXME (jguer): move to User package
 	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features)
 	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
+	teamSync := sync.ProvideTeamSync(userService, teamService, accessControlService, cfg, tracer)
 	authnSvc.RegisterPostAuthHook(userSync.SyncUserHook, 10)
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)
 	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 30)
 	authnSvc.RegisterPostAuthHook(userSync.SyncLastSeenHook, 130)
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
+	authnSvc.RegisterPostAuthHook(teamSync.SyncTeamsHook, 140)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
 	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
